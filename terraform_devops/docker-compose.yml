@@ -1,0 +1,35 @@
+version: '3.8'  # Versão recomendada para Docker Compose
+
+services:
+  web:
+    build: ./docker
+    ports:
+      - "80:5000"
+    volumes:
+      - ./docker/app:/app
+    networks:
+      - devops-network
+    command: ["python", "app.py"]
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "8080:80"
+    networks:
+      - devops-network
+
+  terraform:
+    image: hashicorp/terraform:latest
+    volumes:
+      - ./terraform:/workspace
+      - ./terraform/account.json:/workspace/account.json:ro  # Monta o arquivo da chave JSON da conta de serviço
+    working_dir: /workspace  # Defina o diretório de trabalho para o Terraform
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/workspace/account.json  # Aponta para o arquivo JSON da conta de serviço
+    entrypoint: ["terraform"]
+
+networks:
+  devops-network:
+    driver: bridge
